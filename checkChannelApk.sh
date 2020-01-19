@@ -19,15 +19,30 @@ apkPath=${file#*/}
 # 取出包名并截取出渠道号
 # 例：PPmoney_WHAN_FF_PPZSCPD_v8.1.6 ==> WHAN_FF_PPZSCPD 
 channel=${file#*_}
-channel=${channel%_*}
+channel=${channel%_v*}
 
 # 命令行获取包渠道号,并截取出渠道号
 walleChannel=$(java -jar walle-cli-all.jar show $apkPath)
-walleChannel=${walleChannel#*=}
-walleChannel=${walleChannel%\}*}
+equalSign="="
+if [[ $walleChannel =~ $equalSign ]]
+then
+	walleChannel=${walleChannel#*=}
+	walleChannel=${walleChannel%\}*}
+else
+	walleChannel=''
+fi
 
-#比较,正确的话输出日志并将已执行的apk移动到run文件夹，错误则打印错误日志
-if [ $channel == $walleChannel ]; then
+if [[ $channel != $walleChannel ]]; then
+	channel=${file#*_}
+	channel=${channel%.apk*}
+fi
+
+
+echo -e $channel
+echo -e $walleChannel
+	
+#比较,正确的话将apk移动到runApk文件夹，错误则移动到errorApk文件夹，并且把过程记录在log文件里
+if [[ $channel == $walleChannel ]]; then
 	echo -e "success: "$apkPath", channel:"$channel", realChannel:"$walleChannel'\n' >>checkChannelResult.log
 	mv $file ./runApk
 else
